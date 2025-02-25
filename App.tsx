@@ -11,11 +11,13 @@ export default function App() {
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
             >
+                <CustomTextInput label={'Label'}  clearIcon/>
+
 
                 <CustomTextInput label={'Label'} clearIcon/>
-                <CustomTextInput label={'Label'} clearIcon rightIcon/>
+                <CustomTextInput label={'Label'} clearIcon rightIcon type='password'/>
                 <CustomTextInput label={'Label'} clearIcon rightIcon state="disabled"/>
-                <CustomTextInput label={'Label'} leftIcon/>
+                <CustomTextInput label={'Label'} leftIcon type='password'/>
                 <CustomTextInput label={'Label'} leftIcon state="disabled"/>
                 <CustomTextInput label={'Label'} leftIcon rightIcon/>
 
