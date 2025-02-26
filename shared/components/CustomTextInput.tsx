@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
-import {View, TextInput, StyleSheet, Text, TouchableOpacity} from 'react-native';
+import {View, TextInput, StyleSheet, TouchableOpacity} from 'react-native';
+import {useController} from 'react-hook-form';
 import Animated, {useAnimatedStyle, withTiming} from 'react-native-reanimated';
 import {Typography} from "@/shared/components/Typography";
 import {EyeIcon} from "@/shared/icons/EyeIcon";
@@ -7,18 +8,21 @@ import {ClearIcon} from "@/shared/icons/ClearIcon";
 import {theme} from "@/shared/theme";
 
 interface CustomTextInputProps {
-    state?: 'default' | 'disabled';
+    control: any;
+    name: string;
+    state?: "default" | "disabled";
     label?: string;
     rightIcon?: boolean;
     leftIcon?: boolean;
     title?: string;
     helperText?: string;
     clearIcon?: boolean;
-    type?: 'text' | 'password'
-    error?: boolean
+    type?: "text" | "password" | "email" | "number" | "phone" | "url" | "search" | "date"
 }
 
 export const CustomTextInput: React.FC<CustomTextInputProps> = ({
+                                                                    control,
+                                                                    name,
                                                                     state = "default",
                                                                     label,
                                                                     helperText,
@@ -27,50 +31,38 @@ export const CustomTextInput: React.FC<CustomTextInputProps> = ({
                                                                     title,
                                                                     clearIcon = false,
                                                                     type = "text",
-                                                                    error = false
                                                                 }) => {
-    const [isFocused, setIsFocused] = useState(false);
-    const [value, setValue] = useState('');
+    const {field, fieldState} = useController({control, name});
 
     const iconColor = state === "disabled" ? theme.palette.text.buttonDisabled : theme.palette.text.tetriary;
     const placeholderColor = state === "disabled" ? theme.palette.text.buttonDisabled : theme.palette.text.tetriary;
 
-    const handleChangeText = (text: string) => {
-        setValue(text);
-    };
-
-    const handleClearText = () => {
-        setValue("");
-    };
-
     const animatedStyle = useAnimatedStyle(() => {
         return {
             borderColor: withTiming(
-                error ? theme.palette.text.danger : isFocused ? theme.palette.input.strokeFocused : theme.palette.input.stroke,
+                fieldState?.error ? theme.palette.text.danger : theme.palette.input.stroke,
                 {duration: 500}
             ),
             backgroundColor: withTiming(
-                error ? theme.palette.input.filled : isFocused ? theme.palette.input.focused : theme.palette.input.primary,
+                fieldState?.error ? theme.palette.input.filled : theme.palette.input.primary,
                 {duration: 500}
             )
         };
     });
 
+    const handleClearText = () => {
+        field.onChange("");
+    };
+
     const renderIcon = () => {
-        if (!isFocused && rightIcon && type === "password") {
-            return <EyeIcon color={iconColor}/>;
-        }
-        if (type === "password" && isFocused && value.length <= 0 && !clearIcon && !leftIcon || rightIcon && leftIcon && isFocused) {
-            return <EyeIcon color={iconColor}/>;
-        }
-        if (isFocused && value.length > 0 && clearIcon) {
+        if (field.value && field.value.length > 0 && !leftIcon) {
             return (
                 <TouchableOpacity onPress={handleClearText}>
                     <ClearIcon color={iconColor}/>
                 </TouchableOpacity>
             );
         }
-        if (type === "password" && !isFocused && value.length > 0 && rightIcon || isFocused && value.length < 0 && rightIcon) {
+        if (type == "password" && rightIcon) {
             return <EyeIcon color={iconColor}/>;
         }
         return null;
@@ -84,22 +76,24 @@ export const CustomTextInput: React.FC<CustomTextInputProps> = ({
                 <TextInput
                     style={[styles.input, state === "disabled" && styles.disabledText]}
                     placeholder={label}
-                    value={value}
-                    onChangeText={handleChangeText}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={() => {
+                        field.onBlur();
+                    }}
                     editable={state !== "disabled"}
                     placeholderTextColor={placeholderColor}
-
                 />
+
+
                 {renderIcon()}
             </Animated.View>
-            {helperText && (
+            {(helperText || fieldState?.error?.message) && (
                 <Typography
                     variant="captionReg"
-                    style={[styles.helperText, error && styles.helperTextError]}
+                    style={[styles.helperText, fieldState?.error && styles.helperTextError]}
                 >
-                    {helperText}
+                    {fieldState?.error?.message || helperText}
                 </Typography>
             )}
         </View>
